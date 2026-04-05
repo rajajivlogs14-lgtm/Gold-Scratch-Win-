@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>GOLD SCRATCH & WIN | Premium Security</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      min-height: 100vh;
+      background: radial-gradient(circle at 20% 30%, #0a0c12, #030507);
+      font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .game-container {
+      max-width: 650px;
+      width: 100%;
+      background: rgba(10, 14, 23, 0.7);
+      backdrop-filter: blur(3px);
+      border-radius: 64px 48px 64px 48px;
+      box-shadow: 0 30px 45px -20px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.08);
+      padding: 24px 20px 32px;
+      border: 1px solid rgba(255,215,0,0.25);
+      transition: all 0.2s;
+    }
+
+    .title-section {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .title-section h1 {
+      font-size: 1.9rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #F5E7B2, #E0B85B, #CFA23A);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      letter-spacing: -0.5px;
+    }
+    .sub {
+      color: #9ca3af;
+      font-size: 0.8rem;
+      margin-top: 6px;
+      border-top: 1px dashed rgba(224,184,91,0.5);
+      display: inline-block;
+      padding-top: 6px;
+    }
+
+    .scratch-wrapper {
+      background: #1e1f2c;
+      border-radius: 48px;
+      padding: 12px;
+      box-shadow: 0 20px 35px -12px black;
+      margin: 16px 0 20px;
+    }
+    .canvas-area {
+      position: relative;
+      display: flex;
+      justify-content: center;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 36px;
+      cursor: pointer;
+      touch-action: none;
+      box-shadow: inset 0 0 0 2px rgba(255,255,200,0.3), 0 10px 20px rgba(0,0,0,0.3);
+    }
+    .prize-preview {
+      text-align: center;
+      margin-top: 20px;
+      background: rgba(0,0,0,0.55);
+      border-radius: 60px;
+      padding: 12px 18px;
+      backdrop-filter: blur(4px);
+    }
+    .prize-label {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #c0bfc7;
+    }
+    .prize-value {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #F5D742;
+      text-shadow: 0 0 5px #ffb347;
+      word-break: break-word;
+    }
+    .status-msg {
+      font-size: 0.85rem;
+      margin-top: 8px;
+      color: #d1d5db;
+      font-weight: 500;
+    }
+    .info-note {
+      font-size: 0.7rem;
+      text-align: center;
+      margin-top: 20px;
+      color: #6b7280;
+    }
+    .denied-box {
+      text-align: center;
+      padding: 45px 20px;
+      background: rgba(0,0,0,0.7);
+      border-radius: 56px;
+      backdrop-filter: blur(12px);
+      border: 1px solid #ff4d4d40;
+    }
+    .denied-box h2 {
+      color: #ffb347;
+      font-size: 1.8rem;
+    }
+    .denied-box p {
+      margin-top: 15px;
+      color: #f1f1f1;
+    }
+    .lock-icon {
+      font-size: 3rem;
+      margin-bottom: 10px;
+    }
+    @media (max-width: 500px) {
+      .game-container { padding: 18px 14px 26px; }
+      .prize-value { font-size: 1.2rem; }
+      .title-section h1 { font-size: 1.5rem; }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
+</head>
+<body>
+<div class="game-container" id="appRoot"></div>
+
+<script>
+  (function() {
+    // ======================= HIGH-LEVEL SCRATCH & WIN =======================
+    // FEATURES:
+    // 1. Weighted RNG: 90% LOSS (1-59), 10% WIN (60-100)
+    // 2. Exact prize mapping for winning numbers
+    // 3. Device Fingerprinting + Unique URL Token (anti-sharing, anti-fraud)
+    // 4. One-time scratch per device (localStorage + fingerprint lock)
+    // 5. Canvas scratch effect with number/prize revealed INSIDE card
+    // 6. Confetti animation on win
+    // 7. Mobile friendly (touch events)
+    // =========================================================================
+
+    // ---------- Prize mapping (specific winning numbers) ----------
+    const PRIZE_MAP = {
+      99: { name: "Smart TV (32 inch)", value: "₹9,999" },
+      98: { name: "Automatic Washing Machine", value: "₹9,500" },
+      96: { name: "Premium Soundbar System", value: "₹7,999" },
+      89: { name: "Microwave Oven", value: "₹6,500" },
+      88: { name: "High-End Tablet", value: "₹8,500" },
+      87: { name: "Smartwatch (Premium Edition)", value: "₹4,499" },
+      85: { name: "Designer Ceiling Fan", value: "₹3,200" },
+      84: { name: "Branded Mixer Grinder", value: "₹2,800" },
+      83: { name: "Induction Cooktop", value: "₹2,500" },
+      77: { name: "Gaming Mobile Phone", value: "₹5,000" },
+      76: { name: "Air Fryer (Health Fryer)", value: "₹4,999" },
+      78: { name: "Electric Kettle + Toaster Combo", value: "₹1,500" },
+      66: { name: "Portable Bluetooth Party Speaker", value: "₹1,999" }
+    };
+    const FALLBACK_WIN = { name: "Mystery Cash Voucher", value: "₹199" };
+    const LOSE_PRIZE = { name: "Better Luck Next Time!", value: "₹0" };
+
+    // ---------- Weighted RNG: 90% lose (1-59), 10% win (60-100) ----------
+    function getWeightedNumber() {
+      const rand = Math.random() * 100;
+      if (rand < 10) { // 10% win zone
+        return Math.floor(Math.random() * (100 - 60 + 1) + 60);
+      } else { // 90% lose zone
+        return Math.floor(Math.random() * (59 - 1 + 1) + 1);
+      }
+    }
+
+    function getResultFromNumber(number) {
+      const isWinZone = (number >= 60 && number <= 100);
+      if (isWinZone) {
+        if (PRIZE_MAP[number]) {
+          return { number, isWin: true, prize: PRIZE_MAP[number] };
+        } else {
+          return { number, isWin: true, prize: FALLBACK_WIN };
+        }
+      } else {
+        return { number, isWin: false, prize: LOSE_PRIZE };
+      }
+    }
+
+    // ======================= DEVICE FINGERPRINT & URL BINDING =======================
+    // We generate a robust fingerprint using canvas, navigator properties, screen, timezone.
+    // Then we enforce that the URL contains a token that matches the stored token,
+    // and the fingerprint matches the stored fingerprint. If not -> Access Denied.
+    // This prevents link sharing across devices.
+
+    async function generateFingerprint() {
+      // Canvas fingerprinting (draw text + shapes, get pixel data)
+      const canvas = document.createElement('canvas');
+      canvas.width = 200;
+      canvas.height = 50;
+      const ctx = canvas.getContext('2d');
+      ctx.textBaseline = "top";
+      ctx.font = "14px 'Arial'";
+      ctx.fillStyle = "#f60";
+      ctx.fillRect(0, 0, 100, 30);
+      ctx.fillStyle = "#069";
+      ctx.fillText("ScratchWin", 2, 15);
+      const pixelData = ctx.getImageData(0, 0, 100, 30).data.toString();
+      
+      // Collect browser / device signals
+      const signals = [
+        navigator.userAgent,
+        navigator.language,
+        screen.width + 'x' + screen.height,
+        new Date().getTimezoneOffset(),
+        navigator.hardwareConcurrency || 'unknown',
+        navigator.platform || 'unknown',
+        !!navigator.maxTouchPoints,
+        pixelData.slice(0, 500)  // partial canvas data
+      ];
+      // Simple hash (not cryptographic but enough)
+      let hash = 0;
+      const str = signals.join('|');
+      for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+      }
+      return hash.toString(36) + '_' + str.length;
+    }
+
+    // Store fingerprint + token in localStorage
+    const TOKEN_STORAGE_KEY = "scratch_device_token";
+    const FINGERPRINT_STORAGE_KEY = "scratch_device_fp";
+    const GAME_PLAYED_KEY = "scratch_game_played";   // after scratch completed
+
+    function getUrlToken() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('token');
+    }
+
+    // Set or update URL token without page reload (using history.replaceState)
+    function setUrlToken(token) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('token', token);
+      window.history.replaceState({}, '', url.toString());
+    }
+
+    // Main security check: returns { allowed: boolean, reason: string, storedResult: object|null }
+    async function performSecurityCheck() {
+      // 1. Check if game already played (scratch completed)
+      const played = localStorage.getItem(GAME_PLAYED_KEY) === "true";
+      const storedResultRaw = localStorage.getItem("scratch_final_result");
+      let storedResult = null;
+      if (storedResultRaw) {
+        try { storedResult = JSON.parse(storedResultRaw); } catch(e) {}
+      }
+      
+      // 2. Device fingerprint + token binding
+      const currentFingerprint = await generateFingerprint();
+      const storedFingerprint = localStorage.getItem(FINGERPRINT_STORAGE_KEY);
+      const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+      const urlToken = getUrlToken();
+      
+      // Case: First visit ever (no token, no fingerprint)
+      if (!storedToken && !storedFingerprint && !urlToken) {
+        // Generate new unique token and store fingerprint
+        const newToken = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+        localStorage.setItem(TOKEN_STORAGE_KEY, newToken);
+        localStorage.setItem(FINGERPRINT_STORAGE_KEY, currentFingerprint);
+        setUrlToken(newToken);
+        // Not played yet, allowed
+        return { allowed: true, reason: "", storedResult: null, isPlayed: false };
+      }
+      
+      // If we have stored token/fingerprint but URL token missing -> deny (tampered link)
+      if (storedToken && storedFingerprint && !urlToken) {
+        return { allowed: false, reason: "Access Denied: Invalid link. Original link contains security token.", storedResult: played ? storedResult : null, isPlayed: played };
+      }
+      
+      // If URL token exists but does NOT match stored token -> different device / shared link
+      if (storedToken && urlToken && storedToken !== urlToken) {
+        return { allowed: false, reason: "Access Denied: This link is only for the original recipient. Device mismatch.", storedResult: null, isPlayed: false };
+      }
+      
+      // If fingerprint does not match stored fingerprint -> different device
+      if (storedFingerprint && currentFingerprint !== storedFingerprint) {
+        return { allowed: false, reason: "Access Denied: Device fingerprint changed. This link is locked to the original device.", storedResult: null, isPlayed: false };
+      }
+      
+      // All checks passed: either fresh after token set, or returning user with correct fingerprint & token
+      // However we also need to handle case where game already played (scratch completed)
+      if (played) {
+        return { allowed: false, reason: "You have already claimed your reward. One-time scratch policy.", storedResult: storedResult, isPlayed: true };
+      }
+      
+      return { allowed: true, reason: "", storedResult: null, isPlayed: false };
+    }
+
+    // ---------- Canvas Scratch Logic (Number & Prize inside card) ----------
+    let canvas = null, ctx = null;
+    let currentResult = null;
+    let isScratched = false;
+    let scratchingActive = true;
+    let revealThreshold = 0.45;   // 45% scratched reveals fully
+    let scratchedPixels = 0;
+    let totalPixels = 0;
+    
+    // Draw the UNDERLAY (winning number + prize details) that will be revealed
+    function drawUnderlayContent(result) {
+      if (!ctx) return;
+      ctx.fillStyle = "#1A150E";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Decorative gold border
+      ctx.strokeStyle = "#D4AF37";
+      ctx.lineWidth = 4;
+      ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+      
+      // Big Winning Number
+      ctx.font = `bold ${Math.floor(canvas.height * 0.22)}px "Courier New", monospace`;
+      ctx.fillStyle = result.isWin ? "#F7D44A" : "#9E9E9E";
+      ctx.fillText(`${result.number}`, canvas.width/2 - 45, canvas.height/2 - 20);
+      
+      // Prize name
+      ctx.font = `bold ${Math.floor(canvas.height * 0.07)}px "Segoe UI"`;
+      ctx.fillStyle = "#FFE484";
+      let prizeText = result.prize.name;
+      if (prizeText.length > 22) prizeText = prizeText.substring(0, 20) + "..";
+      ctx.fillText(prizeText, canvas.width/2 - 100, canvas.height - 70);
+      
+      // Prize value
+      ctx.font = `${Math.floor(canvas.height * 0.06)}px "Segoe UI"`;
+      ctx.fillStyle = "#FFB347";
+      ctx.fillText(result.prize.value, canvas.width/2 - 45, canvas.height - 30);
+      
+      // Hint
+      ctx.font = `12px monospace`;
+      ctx.fillStyle = "#a88c47";
+      ctx.fillText("✨ Scratch to reveal ✨", canvas.width/2 - 85, canvas.height - 12);
+    }
+    
+    // Draw silver scratch-off cover
+    function drawScratchCover() {
+      if (!ctx) return;
+      const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      grad.addColorStop(0, '#D9D9E3');
+      grad.addColorStop(0.3, '#B8BCC9');
+      grad.addColorStop(0.7, '#A0A5B5');
+      grad.addColorStop(1, '#C2C7D6');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      ctx.font = `bold ${Math.floor(canvas.width * 0.07)}px "Segoe UI"`;
+      ctx.fillStyle = "#2A2E45";
+      ctx.fillText("💎 SCRATCH 💎", canvas.width/2 - 95, canvas.height/2);
+      ctx.font = `14px monospace`;
+      ctx.fillStyle = "#4A4F6A";
+      ctx.fillText("← swipe / drag →", canvas.width/2 - 70, canvas.height - 25);
+    }
+    
+    function setupCanvasAndCover() {
+      if (!canvas || !currentResult) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawUnderlayContent(currentResult);
+      drawScratchCover();
+      scratchedPixels = 0;
+      totalPixels = canvas.width * canvas.height;
+      isScratched = false;
+      scratchingActive = true;
+      canvas.style.pointerEvents = 'auto';
+    }
+    
+    function scratchAt(x, y, radius = 22) {
+      if (!ctx || !scratchingActive || isScratched) return;
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalCompositeOperation = 'source-over';
+      
+      const area = Math.PI * radius * radius;
+      scratchedPixels += area;
+      const ratio = Math.min(1.0, scratchedPixels / totalPixels);
+      if (!isScratched && ratio >= revealThreshold) {
+        isScratched = true;
+        scratchingActive = false;
+        fullyRevealAndFinish();
+      }
+    }
+    
+    function fullyRevealAndFinish() {
+      if (!ctx) return;
+      // Erase remaining cover completely
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.fillStyle = 'rgba(0,0,0,1)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.globalCompositeOperation = 'source-over';
+      drawUnderlayContent(currentResult);
+      
+      scratchingActive = false;
+      if (canvas) canvas.style.pointerEvents = 'none';
+      
+      // Mark game as played & store final result permanently
+      localStorage.setItem(GAME_PLAYED_KEY, "true");
+      localStorage.setItem("scratch_final_result", JSON.stringify(currentResult));
+      
+      // Update UI panel and show confetti if win
+      updatePanelAndCelebrate();
+    }
+    
+    function updatePanelAndCelebrate() {
+      const prizeNameElem = document.getElementById('revealedPrizeName');
+      const prizeValueElem = document.getElementById('revealedPrizeValue');
+      const statusMsgSpan = document.getElementById('scratchStatusMsg');
+      if (!prizeNameElem) return;
+      
+      if (currentResult.isWin) {
+        prizeNameElem.innerHTML = `🏆 ${currentResult.prize.name} 🏆`;
+        prizeNameElem.style.fontSize = "1.6rem";
+        prizeValueElem.innerHTML = `${currentResult.prize.value} Grand Prize!`;
+        prizeValueElem.style.fontSize = "1.3rem";
+        statusMsgSpan.innerText = "🎉 CONGRATULATIONS! YOU WON! 🎉";
+        // Confetti blast
+        canvasConfetti({ particleCount: 200, spread: 85, origin: { y: 0.6 }, startVelocity: 20, colors: ['#ffd966','#f5b042','#e6c229'] });
+        canvasConfetti({ particleCount: 100, spread: 130, origin: { y: 0.5, x: 0.2 } });
+        canvasConfetti({ particleCount: 100, spread: 130, origin: { y: 0.5, x: 0.8 } });
+        setTimeout(() => canvasConfetti({ particleCount: 400, spread: 70, origin: { y: 0.7 } }), 150);
+      } else {
+        prizeNameElem.innerHTML = `😔 ${currentResult.prize.name}`;
+        prizeValueElem.innerHTML = `${currentResult.prize.value} · Try Again`;
+        statusMsgSpan.innerText = "💔 Better luck next time!";
+      }
+      const extraSpan = document.getElementById('extraNumberDisplay');
+      if (extraSpan) extraSpan.innerText = `🎲 Drawn Number: ${currentResult.number} ${currentResult.isWin ? '⭐ WINNER' : '❌ NON-WINNER'}`;
+    }
+    
+    function bindScratchEvents() {
+      if (!canvas) return;
+      let drawing = false;
+      let lastX = 0, lastY = 0;
+      
+      function getCoords(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        let clientX, clientY;
+        if (e.touches) {
+          clientX = e.touches[0].clientX;
+          clientY = e.touches[0].clientY;
+        } else {
+          clientX = e.clientX;
+          clientY = e.clientY;
+        }
+        let canvasX = (clientX - rect.left) * scaleX;
+        let canvasY = (clientY - rect.top) * scaleY;
+        canvasX = Math.min(Math.max(0, canvasX), canvas.width);
+        canvasY = Math.min(Math.max(0, canvasY), canvas.height);
+        return { x: canvasX, y: canvasY };
+      }
+      
+      function handleStart(e) {
+        e.preventDefault();
+        if (!scratchingActive || isScratched) return;
+        drawing = true;
+        const { x, y } = getCoords(e);
+        lastX = x; lastY = y;
+        scratchAt(x, y, 24);
+      }
+      
+      function handleMove(e) {
+        if (!drawing || !scratchingActive || isScratched) return;
+        e.preventDefault();
+        const { x, y } = getCoords(e);
+        const dist = Math.hypot(x - lastX, y - lastY);
+        if (dist > 0) {
+          const steps = Math.ceil(dist / 5);
+          for (let i = 0; i <= steps; i++) {
+            const t = i / steps;
+            const ix = lastX + (x - lastX) * t;
+            const iy = lastY + (y - lastY) * t;
+            scratchAt(ix, iy, 20);
+          }
+        }
+        scratchAt(x, y, 22);
+        lastX = x; lastY = y;
+      }
+      
+      function handleEnd(e) {
+        drawing = false;
+        if (!isScratched && (scratchedPixels / totalPixels) >= revealThreshold) {
+          fullyRevealAndFinish();
+        }
+        e.preventDefault();
+      }
+      
+      canvas.addEventListener('mousedown', handleStart);
+      window.addEventListener('mousemove', (e) => { if (drawing) handleMove(e); });
+      window.addEventListener('mouseup', handleEnd);
+      canvas.addEventListener('touchstart', handleStart, { passive: false });
+      canvas.addEventListener('touchmove', handleMove, { passive: false });
+      canvas.addEventListener('touchend', handleEnd);
+    }
+    
+    // ---------- Main Render: Security Check + Game UI ----------
+    async function renderGame() {
+      const app = document.getElementById('appRoot');
+      if (!app) return;
+      
+      // Perform advanced security (fingerprint + token binding + one-time play)
+      const security = await performSecurityCheck();
+      
+      if (!security.allowed) {
+        // Show denied message (link sharing, device mismatch, or already played)
+        const storedRes = security.storedResult;
+        app.innerHTML = `
+          <div class="denied-box">
+            <div class="lock-icon">🔒</div>
+            <h2>Access Denied</h2>
+            <p>${security.reason}</p>
+            ${storedRes ? `<div  style="margin-top:20px; background:#2a2e3c; padding:12px; border-radius:48px;">
+              <span style="color:#F5D742;">🏆 Previous Result: ${storedRes.isWin ? 'WINNER' : 'LOST'}</span><br>
+              <strong>${storedRes.prize.name} ${storedRes.prize.value}</strong><br>
+              <small>Number: ${storedRes.number}</small>
+            </div>` : ''}
+          </div>
+        `;
+        return;
+      }
+      
+      // Generate fresh result for new allowed user
+      const rawNumber = getWeightedNumber();
+      currentResult = getResultFromNumber(rawNumber);
+      
+      app.innerHTML = `
+        <div class="title-section">
+          <h1>✨ GOLD SCRATCH & WIN ✨</h1>
+          <div class="sub">secure link • one chance only • scratch to reveal number & prize</div>
+        </div>
+        <div class="scratch-wrapper">
+          <div class="canvas-area">
+            <canvas id="scratchCanvas" width="550" height="330" style="width:100%; height:auto; max-width:550px; aspect-ratio:550/330"></canvas>
+          </div>
+          <div class="prize-preview" id="prizePreviewPanel">
+            <div class="prize-label">🏆 YOUR REWARD SUMMARY 🏆</div>
+            <div class="prize-value" id="revealedPrizeName">???</div>
+            <div class="prize-value" id="revealedPrizeValue" style="font-size:1.1rem;">Scratch the silver area</div>
+            <div class="status-msg" id="scratchStatusMsg">✨ Drag finger/mouse on silver card ✨</div>
+            <div class="status-msg" id="extraNumberDisplay" style="font-size:0.75rem; margin-top:5px;"></div>
+          </div>
+        </div>
+        <div class="info-note">
+          <span>🎯 Win rate 10% | Grand prizes: TV, Mobile, Washing Machine & more</span>
+        </div>
+      `;
+      
+      canvas = document.getElementById('scratchCanvas');
+      if (canvas) {
+        canvas.width = 550;
+        canvas.height = 330;
+        ctx = canvas.getContext('2d');
+        setupCanvasAndCover();
+        bindScratchEvents();
+      }
+    }
+    
+    renderGame();
+  })();
+</script>
+</body>
+</html>
